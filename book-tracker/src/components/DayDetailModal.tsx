@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { MockReadingLog } from '../types';
+import type { MockReadingLog } from '../types';
 
 interface DayDetailModalProps {
   date: string;

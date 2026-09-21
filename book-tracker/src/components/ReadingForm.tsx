@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Book, X, Image, Quote, PenLine, Globe, Lock } from 'lucide-react';
-import { UserBook, ReadingFormData } from '../types';
+import type { UserBook, ReadingFormData } from '../types';
 
 interface ReadingFormProps {
   userBooks: UserBook[];

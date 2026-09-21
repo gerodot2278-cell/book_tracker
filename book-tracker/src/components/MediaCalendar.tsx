@@ -1,4 +1,4 @@
-import { useState, ReactNode } from 'react';
+import { useState, Fragment } from 'react';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -143,8 +143,4 @@ export function MediaCalendar({ logs, onDayClick }: MediaCalendarProps) {
       </div>
     </div>
   );
-}
-
-function Fragment({ children }: { children: ReactNode }) {
-  return <>{children}</>;
 }
