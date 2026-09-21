@@ -1,4 +1,3 @@
-import type { MockReadingLog, ReadingFormData } from './types';
 import { useState } from 'react';
 import { BookOpen, Calendar, Users, User } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
@@ -6,7 +5,7 @@ import { MediaCalendar } from './components/MediaCalendar';
 import { ReadingForm } from './components/ReadingForm';
 import { DayDetailModal } from './components/DayDetailModal';
 import { mockUserBooks, mockReadingLogs, calculateStats } from './data/mockData';
-import { MockReadingLog, ReadingFormData } from './types';
+import type { MockReadingLog, ReadingFormData } from './types';
 
 type Tab = 'dashboard' | 'calendar' | 'feed' | 'profile';
 
