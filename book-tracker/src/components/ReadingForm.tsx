@@ -1,20 +1,11 @@
 import { useState } from 'react';
 import { Book, X, Image, Quote, PenLine, Globe, Lock } from 'lucide-react';
-import { UserBook } from '../types';
+import { UserBook, ReadingFormData } from '../types';
 
 interface ReadingFormProps {
   userBooks: UserBook[];
   onSubmit: (data: ReadingFormData) => void;
   onCancel: () => void;
-}
-
-export interface ReadingFormData {
-  bookId: string;
-  pagesRead: number;
-  quote?: string;
-  note?: string;
-  photo?: File;
-  isPublic: boolean;
 }
 
 export function ReadingForm({ userBooks, onSubmit, onCancel }: ReadingFormProps) {
