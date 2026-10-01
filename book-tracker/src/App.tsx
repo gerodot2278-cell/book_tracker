@@ -1,178 +1,97 @@
 import { useState } from 'react';
-import { BookOpen, Calendar, Users, User } from 'lucide-react';
-import { Dashboard } from './components/Dashboard';
+import { Header } from './components/Header';
+import { NowReading } from './components/NowReading';
+import { QuickLogForm, type QuickLogData } from './components/QuickLogForm';
 import { MediaCalendar } from './components/MediaCalendar';
-import { ReadingForm } from './components/ReadingForm';
 import { DayDetailModal } from './components/DayDetailModal';
-import { mockUserBooks, mockReadingLogs, calculateStats } from './data/mockData';
-import type { MockReadingLog, ReadingFormData } from './types';
+import { RecentLogs } from './components/RecentLogs';
+import { currentBook, initialLogs } from './data/mock';
+import type { LogEntry } from './types/app';
 
-type Tab = 'dashboard' | 'calendar' | 'feed' | 'profile';
+const todayKey = () => new Date().toISOString().split('T')[0];
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
-  const [showReadingForm, setShowReadingForm] = useState(false);
-  const [selectedDate, setSelectedDate] = useState<{ date: string; logs: MockReadingLog[] } | null>(null);
-  
-  const stats = calculateStats();
+  const [page, setPage] = useState(currentBook.currentPage);
+  const [logs, setLogs] = useState<LogEntry[]>(initialLogs);
+  const [selectedDay, setSelectedDay] = useState<{
+    date: string;
+    logs: LogEntry[];
+  } | null>(null);
 
-  const handleAddReading = (data: ReadingFormData) => {
-    console.log('New reading entry:', data);
-    setShowReadingForm(false);
-  };
-
-  const handleDayClick = (date: string, logs: MockReadingLog[]) => {
-    setSelectedDate({ date, logs });
-  };
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return (
-          <Dashboard
-            userBooks={mockUserBooks}
-            totalPagesRead={stats.totalPagesReadAllTime}
-            readingStreak={stats.readingStreak}
-            onAddReading={() => setShowReadingForm(true)}
-          />
-        );
-      case 'calendar':
-        return (
-          <MediaCalendar
-            logs={mockReadingLogs}
-            onDayClick={handleDayClick}
-          />
-        );
-      case 'feed':
-        return (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-              Лента сообщества
-            </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-center py-12">
-              Социальная лента будет доступна на Этапе 4
-            </p>
-          </div>
-        );
-      case 'profile':
-        return (
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-4">
-              Профиль
-            </h2>
-            <p className="text-zinc-500 dark:text-zinc-400 text-center py-12">
-              Авторизация будет доступна на Этапе 2
-            </p>
-          </div>
-        );
-      default:
-        return null;
-    }
+  // Сохранение новой записи из формы быстрой фиксации
+  const handleSaveLog = (data: QuickLogData) => {
+    const entry: LogEntry = {
+      id: `log-${Date.now()}`,
+      date: todayKey(),
+      bookTitle: currentBook.title,
+      author: currentBook.author,
+      coverUrl: currentBook.coverUrl,
+      pagesRead: data.pagesRead,
+      quote: data.quote || undefined,
+      note: data.note || undefined,
+      photoUrl: data.photoUrl,
+    };
+    setLogs((prev) => [entry, ...prev]);
+    // Страницы сегодняшнего чтения сдвигают текущую позицию в книге
+    setPage((p) => Math.min(currentBook.totalPages, p + data.pagesRead));
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-24 md:pb-8">
-      {/* Header */}
-      <header className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <BookOpen className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
-                  Книжный дневник
-                </h1>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Ваш персональный трекер чтения
-                </p>
-              </div>
-            </div>
-            
-            <button
-              onClick={() => setShowReadingForm(true)}
-              className="hidden md:flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-xl transition-colors"
-            >
-              <BookOpen className="w-4 h-4" />
-              Записать чтение
-            </button>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-[#0d0e11] text-[#e8e6e3]">
+      {/* Тонкое кинематографичное свечение сверху */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-x-0 top-0 h-[420px] z-0"
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% -10%, rgba(212,175,55,0.07), transparent 70%)',
+        }}
+      />
 
-      {/* Main Content */}
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        {renderContent()}
+      <Header />
+
+      <main className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-6 sm:space-y-8 pb-20">
+        {/* Герой-подпись */}
+        <div className="animate-fade-up text-center sm:text-left pt-2">
+          <p className="text-[10px] uppercase tracking-[0.4em] text-white/30">
+            ваш книжный дневник
+          </p>
+          <h1 className="mt-2 font-serif text-2xl sm:text-4xl font-medium text-[#f5f0e6] leading-tight">
+            Тишина, свет и&nbsp;несколько сотен страниц
+          </h1>
+          <div className="hairline mt-6 max-w-xs mx-auto sm:mx-0 sm:hidden" />
+        </div>
+
+        {/* 1. Текущая книга */}
+        <NowReading book={currentBook} page={page} onPageChange={setPage} />
+
+        {/* 2. Форма быстрой фиксации */}
+        <QuickLogForm book={currentBook} onSave={handleSaveLog} />
+
+        {/* 3. Календарь + лента */}
+        <div className="grid grid-cols-1 xl:grid-cols-[minmax(340px,5fr)_7fr] gap-6 sm:gap-8 items-start">
+          <MediaCalendar
+            logs={logs}
+            onDayClick={(date, dayLogs) => setSelectedDay({ date, logs: dayLogs })}
+          />
+          <RecentLogs logs={logs} />
+        </div>
+
+        {/* Подвал */}
+        <footer className="pt-6 text-center">
+          <div className="hairline max-w-sm mx-auto mb-6" />
+          <p className="text-[10px] uppercase tracking-[0.35em] text-white/20">
+            FOLIO · читай медленно · записывай красиво
+          </p>
+        </footer>
       </main>
 
-      {/* Bottom Navigation (Mobile) */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 md:hidden z-40">
-        <div className="grid grid-cols-4">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              activeTab === 'dashboard'
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }`}
-          >
-            <BookOpen className="w-6 h-6 mb-1" />
-            <span className="text-xs">Дневник</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('calendar')}
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              activeTab === 'calendar'
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }`}
-          >
-            <Calendar className="w-6 h-6 mb-1" />
-            <span className="text-xs">Календарь</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('feed')}
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              activeTab === 'feed'
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }`}
-          >
-            <Users className="w-6 h-6 mb-1" />
-            <span className="text-xs">Лента</span>
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('profile')}
-            className={`flex flex-col items-center py-3 px-2 transition-colors ${
-              activeTab === 'profile'
-                ? 'text-purple-600 dark:text-purple-400'
-                : 'text-zinc-500 dark:text-zinc-400'
-            }`}
-          >
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-xs">Профиль</span>
-          </button>
-        </div>
-      </nav>
-
-      {/* Modals */}
-      {showReadingForm && (
-        <ReadingForm
-          userBooks={mockUserBooks}
-          onSubmit={handleAddReading}
-          onCancel={() => setShowReadingForm(false)}
-        />
-      )}
-
-      {selectedDate && (
+      {/* Модальное окно дня */}
+      {selectedDay && (
         <DayDetailModal
-          date={selectedDate.date}
-          logs={selectedDate.logs}
-          onClose={() => setSelectedDate(null)}
+          date={selectedDay.date}
+          logs={selectedDay.logs}
+          onClose={() => setSelectedDay(null)}
         />
       )}
     </div>

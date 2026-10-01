@@ -1,150 +1,171 @@
-import { useState, ReactNode } from 'react';
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isToday } from 'date-fns';
-import { ru } from 'date-fns/locale';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import type { MockReadingLog } from '../types';
+import { useState } from 'react';
+import { monthNamesRu, weekdayShortRu } from '../data/mock';
+import type { LogEntry } from '../types/app';
 
-interface MediaCalendarProps {
-  logs: MockReadingLog[];
-  onDayClick?: (date: string, logs: MockReadingLog[]) => void;
+interface Props {
+  logs: LogEntry[];
+  onDayClick: (dateStr: string, dayLogs: LogEntry[]) => void;
 }
 
-export function MediaCalendar({ logs, onDayClick }: MediaCalendarProps) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+const toKey = (y: number, m: number, d: number) =>
+  `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
-  const monthStart = startOfMonth(currentMonth);
-  const monthEnd = endOfMonth(currentMonth);
-  const calendarStart = startOfWeek(monthStart, { locale: ru });
-  const calendarEnd = endOfWeek(monthEnd, { locale: ru });
+export function MediaCalendar({ logs, onDayClick }: Props) {
+  const today = new Date();
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
 
-  const calendarDays = eachDayOfInterval({
-    start: calendarStart,
-    end: calendarEnd,
+  // Группируем логи по датам
+  const byDate = new Map<string, LogEntry[]>();
+  logs.forEach((log) => {
+    const arr = byDate.get(log.date) ?? [];
+    arr.push(log);
+    byDate.set(log.date, arr);
   });
 
-  const weeks: Date[][] = [];
-  for (let i = 0; i < calendarDays.length; i += 7) {
-    weeks.push(calendarDays.slice(i, i + 7));
-  }
+  const firstWeekday = (new Date(viewYear, viewMonth, 1).getDay() + 6) % 7; // Пн=0
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-  const getLogsForDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return logs.filter(log => log.date === dateStr);
+  const cells: (number | null)[] = [
+    ...Array.from({ length: firstWeekday }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  const prevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else setViewMonth((m) => m - 1);
   };
 
-  const handlePrevMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  const nextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else setViewMonth((m) => m + 1);
   };
-
-  const handleNextMonth = () => {
-    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
-  };
-
-  const handleDayClick = (date: Date) => {
-    if (onDayClick) {
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const dayLogs = logs.filter(log => log.date === dateStr);
-      onDayClick(dateStr, dayLogs);
-    }
-  };
-
-  const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
 
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-sm border border-zinc-200 dark:border-zinc-800 p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-          {format(currentMonth, 'LLLL yyyy', { locale: ru })}
+    <section className="animate-fade-up bg-[#16181d] border border-white/10 rounded-2xl p-4 sm:p-6 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.9)]">
+      {/* Заголовок календаря */}
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-[11px] uppercase tracking-[0.3em] text-[#d4af37]/80 font-medium">
+          Медиа-календарь
         </h2>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={handlePrevMonth}
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            onClick={prevMonth}
+            className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-white/40 hover:text-[#d4af37] hover:border-[#d4af37]/40 transition-colors"
+            aria-label="Предыдущий месяц"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4" />
           </button>
+          <span className="min-w-[130px] sm:min-w-[150px] text-center text-sm text-[#f5f0e6] font-light">
+            {monthNamesRu[viewMonth]} {viewYear}
+          </span>
           <button
-            onClick={handleNextMonth}
-            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+            onClick={nextMonth}
+            className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center text-white/40 hover:text-[#d4af37] hover:border-[#d4af37]/40 transition-colors"
+            aria-label="Следующий месяц"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-7 gap-1 mb-2">
-        {weekDays.map(day => (
+      {/* Дни недели */}
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 mb-2">
+        {weekdayShortRu.map((w) => (
           <div
-            key={day}
-            className="text-center text-sm font-medium text-zinc-500 dark:text-zinc-400 py-2"
+            key={w}
+            className="text-center text-[10px] uppercase tracking-wider text-white/25 py-1"
           >
-            {day}
+            {w}
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
-        {weeks.map((week, weekIndex) => (
-          <Fragment key={weekIndex}>
-            {week.map((day, dayIndex) => {
-              const dayLogs = getLogsForDate(day);
-              const hasPhoto = dayLogs.some(log => log.photoUrl);
-              const hasPages = dayLogs.length > 0;
-              const totalPageRead = dayLogs.reduce((sum, log) => sum + log.pagesRead, 0);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
+      {/* Сетка дней */}
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+        {cells.map((day, idx) => {
+          if (day === null) return <div key={`empty-${idx}`} />;
 
-              return (
-                <button
-                  key={dayIndex}
-                  onClick={() => handleDayClick(day)}
-                  className={`
-                    aspect-square p-2 rounded-xl transition-all relative
-                    ${!isCurrentMonth ? 'opacity-30' : ''}
-                    ${isToday(day) ? 'ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-zinc-900' : ''}
-                    ${hasPhoto 
-                      ? 'hover:scale-105 hover:shadow-lg' 
-                      : 'hover:bg-zinc-50 dark:hover:bg-zinc-800'}
-                  `}
+          const dateKey = toKey(viewYear, viewMonth, day);
+          const dayLogs = byDate.get(dateKey) ?? [];
+          const hasPhoto = dayLogs.some((l) => l.photoUrl);
+          const photo = dayLogs.find((l) => l.photoUrl)?.photoUrl;
+          const isToday =
+            day === today.getDate() &&
+            viewMonth === today.getMonth() &&
+            viewYear === today.getFullYear();
+          const clickable = dayLogs.length > 0;
+
+          return (
+            <button
+              key={dateKey}
+              disabled={!clickable}
+              onClick={() => clickable && onDayClick(dateKey, dayLogs)}
+              className={[
+                'relative aspect-square rounded-xl flex items-center justify-center transition-all duration-300',
+                clickable
+                  ? 'cursor-pointer hover:scale-105'
+                  : 'cursor-default',
+                !clickable && isToday
+                  ? 'border border-[#d4af37]/40'
+                  : '',
+                clickable
+                  ? 'border border-transparent hover:border-[#d4af37]/40'
+                  : 'border border-transparent',
+              ].join(' ')}
+              title={
+                clickable
+                  ? `${dayLogs.reduce((s, l) => s + l.pagesRead, 0)} стр.`
+                  : undefined
+              }
+            >
+              {hasPhoto && photo ? (
+                // Круглая миниатюра фотографии вместо цифры
+                <span className="relative block w-3/4 h-3/4 rounded-full overflow-hidden ring-1 ring-[#d4af37]/40 shadow-[0_4px_14px_rgba(0,0,0,0.5)]">
+                  <img
+                    src={photo}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                  />
+                  {dayLogs.length > 1 && (
+                    <span className="absolute bottom-0 right-0 px-1 text-[8px] leading-tight bg-black/70 text-[#d4af37] rounded-tl-md">
+                      +{dayLogs.length - 1}
+                    </span>
+                  )}
+                </span>
+              ) : (
+                <span
+                  className={[
+                    'text-xs tabular-nums',
+                    isToday
+                      ? 'text-[#d4af37] font-semibold'
+                      : dayLogs.length > 0
+                        ? 'text-[#f5f0e6] font-medium'
+                        : 'text-white/25',
+                  ].join(' ')}
                 >
-                  <div className="h-full flex flex-col items-center justify-center">
-                    {hasPhoto ? (
-                      <div className="w-full h-full rounded-lg overflow-hidden relative">
-                        <img
-                          src={dayLogs.find(log => log.photoUrl)?.photoUrl}
-                          alt=""
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                          <span className="text-white text-xs font-medium">
-                            {totalPageRead} стр.
-                          </span>
-                        </div>
-                      </div>
-                    ) : hasPages ? (
-                      <div className="flex flex-col items-center gap-1">
-                        <span className={`text-sm font-medium ${isCurrentMonth ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-400'}`}>
-                          {format(day, 'd')}
-                        </span>
-                        <span className="text-xs px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full">
-                          +{totalPageRead} стр.
-                        </span>
-                      </div>
-                    ) : (
-                      <span className={`text-sm ${isCurrentMonth ? 'text-zinc-700 dark:text-zinc-300' : 'text-zinc-400'}`}>
-                        {format(day, 'd')}
-                      </span>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </Fragment>
-        ))}
-      </div>
-    </div>
-  );
-}
+                  {day}
+                </span>
+              )}
 
-function Fragment({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+              {/* Точка-индикатор, если есть записи без фото */}
+              {dayLogs.length > 0 && !hasPhoto && (
+                <span className="absolute bottom-1 w-1 h-1 rounded-full bg-[#d4af37]/70" />
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <p className="mt-4 text-[10px] text-white/20 text-center uppercase tracking-widest">
+        Нажмите на день с фотографией, чтобы открыть детали
+      </p>
+    </section>
+  );
 }

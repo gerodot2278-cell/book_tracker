@@ -1,32 +1,120 @@
-# React + TypeScript + Vite
+# Книжный дневник (Book Tracker)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Веб-приложение для отслеживания чтения книг с календарём, статистикой и социальными функциями.
 
-Currently, two official plugins are available:
+## Технологии
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **React 19** с TypeScript
+- **Vite** - сборка проекта
+- **Tailwind CSS** - стилизация
+- **date-fns** - работа с датами
+- **Lucide React** - иконки
+- **Recharts** - графики и диаграммы
 
-## React Compiler
+## Быстрый старт на Windows
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Шаг 1: Установите Node.js
 
-## Expanding the Oxlint configuration
+1. Скачайте Node.js LTS версии с официального сайта: https://nodejs.org/
+2. Запустите установщик
+3. **Важно:** Убедитесь, что отмечены опции:
+   - "Add to PATH"
+   - "Automatically install the necessary tools"
+4. После установки **перезапустите компьютер**
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+### Шаг 2: Проверьте установку
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Откройте командную строку (cmd) или PowerShell и выполните:
+
+```bash
+node --version
+npm --version
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Обе команды должны вывести номера версий.
+
+### Шаг 3: Установите зависимости проекта
+
+Перейдите в папку с проектом и выполните:
+
+```bash
+cd путь\к\папке\book-tracker
+npm install
+```
+
+Дождитесь завершения установки всех зависимостей.
+
+### Шаг 4: Запустите проект
+
+```bash
+npm run dev
+```
+
+После запуска вы увидите сообщение:
+
+```
+  VITE v8.3.0  ready in xxx ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+```
+
+### Шаг 5: Откройте приложение
+
+Откройте браузер и перейдите по адресу: **http://localhost:5173/**
+
+## Команды проекта
+
+| Команда | Описание |
+|---------|----------|
+| `npm run dev` | Запуск сервера разработки |
+| `npm run build` | Сборка для продакшена |
+| `npm run preview` | Предпросмотр собранной версии |
+| `npm run lint` | Проверка кода линтером |
+
+## Структура проекта
+
+```
+book-tracker/
+├── src/
+│   ├── components/       # React компоненты
+│   │   ├── Dashboard.tsx
+│   │   ├── MediaCalendar.tsx
+│   │   ├── ReadingForm.tsx
+│   │   └── DayDetailModal.tsx
+│   ├── types/           # Типы TypeScript
+│   │   └── index.ts
+│   ├── data/            # Mock данные
+│   │   └── mockData.ts
+│   ├── App.tsx          # Главный компонент
+│   └── main.tsx         # Точка входа
+├── package.json
+├── tsconfig.json
+├── tailwind.config.js
+└── vite.config.ts
+```
+
+## Возможности приложения
+
+- 📊 **Dashboard** - статистика чтения, текущая книга
+- 📅 **Календарь** - визуализация дней чтения с фото
+- ✍️ **Форма записи** - добавление прочитанных страниц, цитат, заметок
+- 📱 **Адаптивный дизайн** - работает на мобильных и десктопах
+
+## Решение проблем
+
+### Ошибка "vite не является внутренней или внешней командой"
+
+Выполните `npm install` для установки зависимостей.
+
+### Ошибка сборки TypeScript
+
+Убедитесь, что все импорты типов используют синтаксис `import type`.
+
+### Проблемы с OneDrive
+
+Если проект находится в папке OneDrive, возможны проблемы с синхронизацией. Рекомендуется переместить проект в локальную папку вне OneDrive.
+
+## Лицензия
+
+MIT

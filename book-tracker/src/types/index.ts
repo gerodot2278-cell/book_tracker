@@ -1,5 +1,7 @@
 // Types for the Book Tracker Application
 
+export type { LogEntry, CurrentBook } from './app';
+
 export interface Profile {
   id: string;
   username: string;
